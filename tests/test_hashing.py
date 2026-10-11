@@ -55,6 +55,9 @@ def test_large_file_uses_bounded_reads(tmp_path, monkeypatch):
     class RecordingFile:
         """Record actual reads while keeping the filesystem real."""
 
+        def __init__(self):
+            self.stream = None
+
         def __enter__(self):
             self.stream = real_open(path, "rb")
             return self

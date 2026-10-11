@@ -12,8 +12,8 @@ from tests.helpers import FakeParent, patch_verify_widgets
 ABC_SHA256 = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"
 
 
-@pytest.fixture
-def mode(monkeypatch):
+@pytest.fixture(name="mode")
+def verify_mode(monkeypatch):
     """Construct real mode logic with only the Tk boundary replaced."""
     patch_verify_widgets(monkeypatch, verify_files)
     instance = verify_files.VerifyFilesMode(
