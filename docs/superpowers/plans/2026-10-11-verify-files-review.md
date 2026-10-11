@@ -1,6 +1,7 @@
 # Verify Files implementation record
 
-Implemented on `codex/verify-files`, starting at `97a2a82`. All commits use
+Implemented on `codex/verify-files`, starting at `97a2a82`, then continued on
+`feature/verify-files` after the requested branch rename. All commits use
 the existing Git identity, Marios Papadimas, without co-author trailers.
 
 ## Verified
@@ -30,11 +31,17 @@ Both were fixed with regression tests watched fail before the changes:
 The author ran the full suite after each fix; no second independent review was
 performed, as prescribed by the executing-plans workflow.
 
-## Deferred minor
+## Compare mode follow-up
 
-Compare Hashes can retain the previous status after editing a hash or choosing
-another algorithm. Press Check Hashes to recompute. The reviewer classified this
-as minor; automatic status clearing is deferred.
+The stale Compare Hashes status was initially deferred as a minor review finding.
+It is now fixed at the user's request: editing either hash or changing the
+algorithm clears the old result. StringVar observers are removed when the mode
+is disposed, so switching modes does not leave retained callbacks.
+
+The regression tests failed before implementation: 12 stale-result failures and
+one missing-callback-cleanup failure. After the fix, 76 tests pass with the desktop
+test enabled; the headless run has 75 passes and one skipped desktop test. Pylint
+remains 10.00/10.
 
 ## Rulings, in order
 
@@ -62,6 +69,9 @@ as minor; automatic status clearing is deferred.
 ## Delivery
 
 Draft PR: https://github.com/mariospapadimas/Hash-Checker-Python/pull/11
+
+PR #11 retains its original remote source branch. The follow-up fix is pushed to
+`feature/verify-files`; the PR text and original source branch are unchanged.
 
 GitHub CI passed: Python application tests and Pylint for Python 3.8, 3.9, 3.10.
 The PR is draft for the user's code review; no merge was performed.
