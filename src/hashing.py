@@ -20,7 +20,8 @@ def calculate_file_hash(
     """
     if chunk_size <= 0:
         raise ValueError("Hash chunk size must be positive")
-    digest = hashlib.new(AppUtils.get_hashlib_algorithm(algorithm))
+    # File checksums may use legacy algorithms on restricted builds.
+    digest = hashlib.new(AppUtils.get_hashlib_algorithm(algorithm), usedforsecurity=False)
     with open(file_path, "rb") as source:
         total = os.fstat(source.fileno()).st_size
         processed = 0

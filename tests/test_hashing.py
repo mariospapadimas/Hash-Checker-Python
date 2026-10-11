@@ -22,6 +22,25 @@ def test_known_abc_digest(tmp_path, algorithm, digest):
     assert calculate(str(path), algorithm, chunk_size=1) == digest
 
 
+@pytest.mark.parametrize("algorithm,digest", [
+    ("MD5", "900150983cd24fb0d6963f7d28e17f72"),
+    ("SHA-1", "a9993e364706816aba3e25717850c26c9cd0d89d"),
+])
+def test_legacy_checksums_on_restricted_build(tmp_path, monkeypatch, algorithm, digest):
+    """Legacy file checksums work when security use is blocked by the provider."""
+    path = tmp_path / "abc.bin"
+    path.write_bytes(b"abc")
+    real_new = hashing.hashlib.new
+
+    def restricted_new(name, data=b"", *, usedforsecurity=True):
+        if name in ("md5", "sha1") and usedforsecurity:
+            raise ValueError("Legacy algorithm blocked for security use")
+        return real_new(name, data, usedforsecurity=usedforsecurity)
+
+    monkeypatch.setattr(hashing.hashlib, "new", restricted_new)
+    assert calculate(str(path), algorithm, chunk_size=1) == digest
+
+
 def test_empty_file(tmp_path):
     """The empty digest and final progress are defined without division."""
     path = tmp_path / "empty"
