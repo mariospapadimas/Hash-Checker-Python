@@ -16,15 +16,19 @@ def compare_mode(monkeypatch):
         monkeypatch.setattr(compare_hashes.tk, name, FakeWidget)
     if hasattr(compare_hashes, "ttk"):
         monkeypatch.setattr(compare_hashes.ttk, "Combobox", FakeWidget)
-    return compare_hashes.CompareHashesMode(
+    instance = compare_hashes.CompareHashesMode(
         FakeParent(), SimpleNamespace(main_text_font="font")
     )
+    yield instance
+    instance.dispose()
 
 
 def enter_hashes(mode, first, second, algorithm="SHA-256"):
     """Supply inputs at the Entry boundary without a display."""
-    mode.first_hash.options["text"] = first
-    mode.second_hash.options["text"] = second
+    mode.first_hash.delete(0, "end")
+    mode.first_hash.insert(0, first)
+    mode.second_hash.delete(0, "end")
+    mode.second_hash.insert(0, second)
     mode.algorithm_var.set(algorithm)
 
 
@@ -70,3 +74,47 @@ def test_valid_mismatch_warns(mode):
     text = mode.result_label["text"].lower()
     assert "mismatch" in text
     assert "corrupted or malicious" in text
+
+
+@pytest.mark.parametrize("changed_input", ["algorithm", "first_hash", "second_hash"])
+@pytest.mark.parametrize("first,second", [
+    ("a" * 64, "a" * 64), ("a" * 64, "b" * 64),
+    ("", "a" * 64), ("g" * 64, "a" * 64),
+])
+def test_editing_inputs_clears_previous_result(mode, first, second, changed_input):
+    """Success, mismatch and validation messages cannot describe edited inputs."""
+    enter_hashes(mode, first, second)
+    mode.check()
+    assert mode.result_label["text"]
+    if changed_input == "algorithm":
+        mode.algorithm_var.set("SHA-512")
+    else:
+        entry = getattr(mode, changed_input)
+        entry.delete(0, "end")
+        entry.insert(0, "c" * 64)
+    assert mode.result_label["text"] == ""
+
+
+def test_dispose_releases_real_tcl_input_callbacks(monkeypatch):
+    """Input observers are removed before the controller destroys widgets."""
+    interpreter = compare_hashes.tk.Tcl()
+    parent = SimpleNamespace(_root=lambda: interpreter, tk=interpreter.tk, children=[])
+    for name in ("Entry", "Label", "Button"):
+        monkeypatch.setattr(compare_hashes.tk, name, FakeWidget)
+    monkeypatch.setattr(compare_hashes.ttk, "Combobox", FakeWidget)
+    instance = compare_hashes.CompareHashesMode(
+        parent, SimpleNamespace(main_text_font="font")
+    )
+    variables = (instance.algorithm_var, instance.first_hash_var, instance.second_hash_var)
+    try:
+        instance.dispose()
+        instance.dispose()
+        assert all(not variable.trace_info() for variable in variables)
+        for widget in parent.children:
+            widget.destroy()
+        for variable in variables:
+            variable.set("changed after leaving the mode")
+    finally:
+        for variable in variables:
+            for modes, callback in variable.trace_info():
+                variable.trace_remove(modes, callback)

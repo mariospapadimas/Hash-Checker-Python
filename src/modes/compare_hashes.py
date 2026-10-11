@@ -14,6 +14,8 @@ class CompareHashesMode:
         self.design = design
         self.parent = parent
         self.algorithm_var = tk.StringVar(self.parent, value="SHA-256")
+        self.first_hash_var = tk.StringVar(self.parent)
+        self.second_hash_var = tk.StringVar(self.parent)
         self.algorithm_select = ttk.Combobox(
             self.parent,
             values=list(AppUtils.ALGORITHMS),
@@ -43,11 +45,13 @@ class CompareHashesMode:
 
         self.first_hash = tk.Entry(
             self.parent,
+            textvariable=self.first_hash_var,
             width=60
         )
 
         self.second_hash = tk.Entry(
             self.parent,
+            textvariable=self.second_hash_var,
             width=60
         )
 
@@ -59,6 +63,20 @@ class CompareHashesMode:
             fg="white",
             bg="black"
         )
+        self._traces = [
+            (variable, variable.trace_add("write", self._clear_result))
+            for variable in (self.algorithm_var, self.first_hash_var, self.second_hash_var)
+        ]
+
+    def _clear_result(self, *_args):
+        """Discard a result when the inputs it describes change."""
+        self.result_label.config(text="")
+
+    def dispose(self):
+        """Remove input observers before the controller destroys widgets."""
+        for variable, callback in self._traces:
+            variable.trace_remove("write", callback)
+        self._traces.clear()
 
     def draw_ui(self):
         """Draw the UI."""

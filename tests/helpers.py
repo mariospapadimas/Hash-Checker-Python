@@ -58,12 +58,20 @@ class FakeWidget:
         return variable.get() if variable else self.options.get("text", "")
 
     def delete(self, *_indices):
-        """Clear a text display."""
-        self.options["text"] = ""
+        """Clear a display or Entry, including its linked StringVar."""
+        variable = self.options.get("textvariable")
+        if variable:
+            variable.set("")
+        else:
+            self.options["text"] = ""
 
     def insert(self, _index, text):
-        """Replace the path displayed in a text control."""
-        self.options["text"] = text
+        """Populate a cleared display or Entry, notifying variable observers."""
+        variable = self.options.get("textvariable")
+        if variable:
+            variable.set(text)
+        else:
+            self.options["text"] = text
 
     def yview(self, *_args):
         """Scrollbar target; native scrolling is covered by the Tk regression."""
