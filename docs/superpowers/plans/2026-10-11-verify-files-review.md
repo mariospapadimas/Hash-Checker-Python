@@ -58,3 +58,11 @@ as minor; automatic status clearing is deferred.
 8. Retain current bounded-queue polling after review found no demonstrated
    starvation under one progress event per MiB. Cost if wrong: an unusually fast
    producer could delay other UI events.
+
+## Delivery
+
+Draft PR: https://github.com/mariospapadimas/Hash-Checker-Python/pull/11
+
+GitHub CI passed: Python application tests and Pylint for Python 3.8, 3.9, 3.10.
+The PR is draft for the user's code review; no merge was performed.
+

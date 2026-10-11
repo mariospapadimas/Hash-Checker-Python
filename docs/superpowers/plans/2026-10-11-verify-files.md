@@ -35,11 +35,11 @@
 
 **Interfaces:** Produce `AppUtils.ALGORITHMS`, `normalize_hash(value: str) -> str`, `is_valid_hash(value: str, algorithm: str) -> bool`, `hashes_match(first: str, second: str) -> bool`, `get_hashlib_algorithm(algorithm: str) -> str`.
 
-- [ ] Write parameterized tests for algorithm lengths 64/128/40/32, mixed case, whitespace, invalid hex, empty values, unsupported algorithm and normalization.
-- [ ] Run tests first: expect assertion failures for missing shared rules.
-- [ ] Implement metadata and strict validation using ASCII hexadecimal characters.
-- [ ] Run targeted tests and full suite: expect all pass.
-- [ ] Commit shared rules and test harness.
+- [x] Write parameterized tests for algorithm lengths 64/128/40/32, mixed case, whitespace, invalid hex, empty values, unsupported algorithm and normalization.
+- [x] Run tests first: expect assertion failures for missing shared rules.
+- [x] Implement metadata and strict validation using ASCII hexadecimal characters.
+- [x] Run targeted tests and full suite: expect all pass.
+- [x] Commit shared rules and test harness.
 
 ### Task 2: Pure chunked hashing
 
@@ -47,12 +47,12 @@
 
 **Interfaces:** Consume AppUtils algorithm mapping. Produce `calculate_file_hash(file_path: str, algorithm: str, chunk_size: int = 1024 * 1024, progress_callback=None) -> str`; callback receives processed and total bytes.
 
-- [ ] Write literal known `b"abc"` digest tests for all algorithms, empty file, small/binary/multichunk data, progress completion, missing file and reliable mocked permission/read failures.
-- [ ] Test zero/negative chunk sizes and unsupported algorithms before reading.
-- [ ] Run tests first: expect failures because hashing is absent.
-- [ ] Implement hashlib streaming, use the opened file's size for progress and propagate OSError.
-- [ ] Run hashing tests and full suite: expect all pass.
-- [ ] Commit hashing core.
+- [x] Write literal known `b"abc"` digest tests for all algorithms, empty file, small/binary/multichunk data, progress completion, missing file and reliable mocked permission/read failures.
+- [x] Test zero/negative chunk sizes and unsupported algorithms before reading.
+- [x] Run tests first: expect failures because hashing is absent.
+- [x] Implement hashlib streaming, use the opened file's size for progress and propagate OSError.
+- [x] Run hashing tests and full suite: expect all pass.
+- [x] Commit hashing core.
 
 ### Task 3: Responsive Verify Files
 
@@ -60,14 +60,14 @@
 
 **Interfaces:** Consume shared rules and calculate_file_hash. Produce mode methods `verify()`, `clear()`, `dispose()` and queue-driven result handling; HashChecker retains and disposes its active mode before widget destruction.
 
-- [ ] Write deterministic behavior tests with lightweight widget doubles for no selection, invalid/empty digest, successful match, mismatch, read failures, selected-file hashing, selection/cancel, busy locking, reset, progress, stale edits and disposal.
-- [ ] Run before implementation: expect failures for missing verification behavior.
-- [ ] Add filename and wrapped path, readonly algorithm selector, expected input, Verify/Clear controls, wrapped status and determinate progress.
-- [ ] Run daemon worker with queue-only events; lock editing while hashing; poll with after and restore controls on completion or error.
-- [ ] On disposal cancel scheduled polling and signal cooperative worker cancellation, without blocking mode switches.
-- [ ] Remove debugging print and retain active mode in controller.
-- [ ] Run mode tests and full suite: expect all pass.
-- [ ] Commit in focused UI/lifecycle units.
+- [x] Write deterministic behavior tests with lightweight widget doubles for no selection, invalid/empty digest, successful match, mismatch, read failures, selected-file hashing, selection/cancel, busy locking, reset, progress, stale edits and disposal.
+- [x] Run before implementation: expect failures for missing verification behavior.
+- [x] Add filename and wrapped path, readonly algorithm selector, expected input, Verify/Clear controls, wrapped status and determinate progress.
+- [x] Run daemon worker with queue-only events; lock editing while hashing; poll with after and restore controls on completion or error.
+- [x] On disposal cancel scheduled polling and signal cooperative worker cancellation, without blocking mode switches.
+- [x] Remove debugging print and retain active mode in controller.
+- [x] Run mode tests and full suite: expect all pass.
+- [x] Commit in focused UI/lifecycle units.
 
 ### Task 4: Compare Hashes and final verification
 
@@ -75,14 +75,14 @@
 
 **Interfaces:** Consume the same AppUtils metadata and shared rules; default algorithm SHA-256. Produce strict validation and normalized comparison in `check()`.
 
-- [ ] Write behavior tests for empty first/second/both, invalid hex, short and exactly 16-character values, valid algorithm digests, match/mismatch and case equivalence.
-- [ ] Run first: expect failures for old minimum-length validation and case-sensitive comparison.
-- [ ] Add selector and replace old validation using shared rules; preserve mismatch warning.
-- [ ] Run targeted tests and full suite: expect all pass.
-- [ ] Run Pylint on every tracked Python file with fail-under=9.0.
-- [ ] Commit compare-mode upgrade and remaining configuration separately when meaningful.
-- [ ] Request one fresh whole-branch review; fix important findings with failing regressions first.
-- [ ] Run final suite and Pylint, push feature branch and create draft PR for the user's code review.
+- [x] Write behavior tests for empty first/second/both, invalid hex, short and exactly 16-character values, valid algorithm digests, match/mismatch and case equivalence.
+- [x] Run first: expect failures for old minimum-length validation and case-sensitive comparison.
+- [x] Add selector and replace old validation using shared rules; preserve mismatch warning.
+- [x] Run targeted tests and full suite: expect all pass.
+- [x] Run Pylint on every tracked Python file with fail-under=9.0.
+- [x] Commit compare-mode upgrade and remaining configuration separately when meaningful.
+- [x] Request one fresh whole-branch review; fix important findings with failing regressions first.
+- [x] Run final suite and Pylint, push feature branch and create draft PR for the user's code review.
 
 ## Acceptance
 
