@@ -21,6 +21,11 @@ class FakeVariable:
     def trace_add(self, _mode, callback):
         """Register a write observer."""
         self.callbacks.append(callback)
+        return callback
+
+    def trace_remove(self, _mode, callback):
+        """Release an observer, matching StringVar's lifecycle contract."""
+        self.callbacks.remove(callback)
 
 
 class FakeWidget:

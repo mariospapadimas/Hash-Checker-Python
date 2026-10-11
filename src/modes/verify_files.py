@@ -49,8 +49,10 @@ class VerifyFilesMode:
         self.progress_bar = ttk.Progressbar(parent, mode="determinate", maximum=100, value=0)
         self.progress_label = tk.Label(parent, text="")
         self.result_label = tk.Label(parent, text="", wraplength=700)
-        self.algorithm_var.trace_add("write", self._inputs_changed)
-        self.expected_hash_var.trace_add("write", self._inputs_changed)
+        self._traces = [
+            (variable, variable.trace_add("write", self._inputs_changed))
+            for variable in (self.algorithm_var, self.expected_hash_var)
+        ]
 
     def draw_ui(self):
         """Use compact controls with wrapping for long paths and results."""
@@ -116,41 +118,47 @@ class VerifyFilesMode:
         self.result_label.config(text="Verifying file...")
         self._update_controls()
         threading.Thread(
-            target=self._hash_file, args=(self.file_path, algorithm, expected), daemon=True
+            target=self._hash_file,
+            args=(self.file_path, algorithm, expected, self._events, self._cancel),
+            daemon=True
         ).start()
         self._after_id = self.parent.after(50, self._poll_events)
 
-    def _queue_event(self, kind, payload):
+    @staticmethod
+    def _queue_event(events, cancel, kind, payload):
         """Bound pending progress; retain recent events and the final result."""
-        while not self._cancel.is_set():
+        while not cancel.is_set():
             try:
-                self._events.put_nowait((kind, payload))
+                events.put_nowait((kind, payload))
                 return
             except queue.Full:
                 try:
-                    self._events.get_nowait()
+                    events.get_nowait()
                 except queue.Empty:
                     pass
 
-    def _hash_file(self, path, algorithm, expected):
+    @staticmethod
+    def _hash_file(path, algorithm, expected, events, cancel):
         """Worker entry point: only pure hashing, cancellation and queue writes."""
         def progress(processed, total):
-            if self._cancel.is_set():
+            if cancel.is_set():
                 raise _HashingCancelled
-            self._queue_event("progress", (processed, total))
+            VerifyFilesMode._queue_event(events, cancel, "progress", (processed, total))
 
         try:
             digest = calculate_file_hash(path, algorithm, progress_callback=progress)
         except _HashingCancelled:
             return
         except FileNotFoundError:
-            self._queue_event("error", "File not found. Please select it again.")
+            VerifyFilesMode._queue_event(events, cancel, "error",
+                                        "File not found. Please select it again.")
         except PermissionError:
-            self._queue_event("error", "Cannot read file: permission denied.")
+            VerifyFilesMode._queue_event(events, cancel, "error",
+                                        "Cannot read file: permission denied.")
         except (OSError, ValueError) as error:
-            self._queue_event("error", f"Cannot read or hash file: {error}")
+            VerifyFilesMode._queue_event(events, cancel, "error", f"Cannot read or hash file: {error}")
         else:
-            self._queue_event("done", (digest, expected))
+            VerifyFilesMode._queue_event(events, cancel, "done", (digest, expected))
 
     def _poll_events(self):
         """Consume worker events exclusively on Tk's main thread."""
@@ -202,3 +210,6 @@ class VerifyFilesMode:
         if self._after_id is not None:
             self.parent.after_cancel(self._after_id)
             self._after_id = None
+        for variable, callback in self._traces:
+            variable.trace_remove("write", callback)
+        self._traces.clear()

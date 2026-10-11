@@ -2,6 +2,8 @@
 
 import threading
 import time
+import gc
+import weakref
 from types import SimpleNamespace
 
 import pytest
@@ -206,3 +208,57 @@ def test_empty_file_completes_progress(mode, tmp_path):
     assert "verified" in mode.result_label["text"].lower()
     assert mode.progress_bar["value"] == 100
     assert "0 / 0 bytes" in mode.progress_label["text"]
+
+
+def test_dispose_removes_real_tcl_traces(monkeypatch):
+    """Tcl callbacks must release disposed modes without a rendered display."""
+    real_variable = verify_files.tk.StringVar
+    patch_verify_widgets(monkeypatch, verify_files)
+    monkeypatch.setattr(verify_files.tk, "StringVar", real_variable)
+    interpreter = verify_files.tk.Tcl()
+    parent = SimpleNamespace(_root=lambda: interpreter, tk=interpreter.tk, children=[])
+    instance = verify_files.VerifyFilesMode(parent, SimpleNamespace(main_text_font="font"))
+    variables = (instance.algorithm_var, instance.expected_hash_var)
+    instance.dispose()
+    instance.dispose()
+    try:
+        assert all(not variable.trace_info() for variable in variables)
+    finally:
+        # Release real Tcl callbacks even when the regression is still red.
+        for variable in variables:
+            for modes, callback in variable.trace_info():
+                variable.trace_remove(modes, callback)
+
+
+def test_abandoned_worker_does_not_retain_ui_mode(mode, tmp_path, monkeypatch):
+    """A slow abandoned read must own only cancellation and event data."""
+    # The fixture owns its instance; create a separate mode for the lifetime check.
+    parent = FakeParent()
+    instance = verify_files.VerifyFilesMode(parent, mode.design)
+    prepare_file(instance, tmp_path)
+    started = threading.Event()
+    release = threading.Event()
+    stopped = threading.Event()
+
+    def blocked_hash(_path, _algorithm, progress_callback):
+        started.set()
+        try:
+            assert release.wait(3)
+            progress_callback(1, 3)
+            return ABC_SHA256
+        finally:
+            stopped.set()
+
+    monkeypatch.setattr(verify_files, "calculate_file_hash", blocked_hash)
+    instance.verify()
+    try:
+        assert started.wait(3)
+        reference = weakref.ref(instance)
+        instance.dispose()
+        parent.children.clear()
+        instance = None
+        gc.collect()
+        assert reference() is None, "abandoned worker retains the UI mode"
+    finally:
+        release.set()
+        assert stopped.wait(3)
