@@ -68,10 +68,11 @@ remains 10.00/10.
 
 ## Delivery
 
-Draft PR: https://github.com/mariospapadimas/Hash-Checker-Python/pull/11
+Draft PR: https://github.com/mariospapadimas/Hash-Checker-Python/pull/12
 
-PR #11 retains its original remote source branch. The follow-up fix is pushed to
-`feature/verify-files`; the PR text and original source branch are unchanged.
+PR #11 was closed and archived at the user's request. The old `codex/verify-files`
+branch refs were removed locally and remotely. PR #12 uses `feature/verify-files`
+and includes all the original commits plus the compare fix.
 
 GitHub CI passed: Python application tests and Pylint for Python 3.8, 3.9, 3.10.
 The PR is draft for the user's code review; no merge was performed.
