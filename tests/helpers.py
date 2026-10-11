@@ -35,6 +35,7 @@ class FakeWidget:
         self.options = options
         self.bindings = {}
         self.destroyed = False
+        self.children = []
         if parent is not None:
             parent.children.append(self)
 
@@ -51,10 +52,24 @@ class FakeWidget:
     def __setitem__(self, key, value):
         self.config(**{key: value})
 
-    def get(self):
+    def get(self, *_indices):
         """Read an entry or combobox."""
         variable = self.options.get("textvariable")
         return variable.get() if variable else self.options.get("text", "")
+
+    def delete(self, *_indices):
+        """Clear a text display."""
+        self.options["text"] = ""
+
+    def insert(self, _index, text):
+        """Replace the path displayed in a text control."""
+        self.options["text"] = text
+
+    def yview(self, *_args):
+        """Scrollbar target; native scrolling is covered by the Tk regression."""
+
+    def set(self, *_args):
+        """Scrollbar update boundary."""
 
     def bind(self, event, callback):
         """Remember event handlers without rendering Tk."""
@@ -101,8 +116,8 @@ class FakeParent:
 def patch_verify_widgets(monkeypatch, module):
     """Replace only Tk construction; verification and hashing remain real."""
     monkeypatch.setattr(module.tk, "StringVar", FakeVariable)
-    for name in ("Button", "Label", "Entry"):
+    for name in ("Button", "Label", "Entry", "Frame", "Text"):
         monkeypatch.setattr(module.tk, name, FakeWidget)
     if hasattr(module, "ttk"):
-        for name in ("Combobox", "Progressbar"):
+        for name in ("Combobox", "Progressbar", "Scrollbar"):
             monkeypatch.setattr(module.ttk, name, FakeWidget)

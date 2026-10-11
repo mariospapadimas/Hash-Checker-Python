@@ -32,4 +32,11 @@ uv run pylint --fail-under=9.0 src tests
 Code is under `src/`, tests under `tests/`. The tests use real file hashing and
 worker threads with lightweight Tk widget doubles, so they also run headlessly.
 
+There is also an optional rendered Tk layout test. On a machine with a desktop:
+
+```powershell
+$env:HASH_CHECKER_UI_TESTS = "1"
+uv run pytest tests/test_tk_ui.py -v
+```
+
 ***All code must follow python naming conventions and be PEP8 compliant.***

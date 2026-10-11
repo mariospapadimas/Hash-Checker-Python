@@ -123,7 +123,7 @@ def test_selection_and_cancel(mode, tmp_path, monkeypatch):
     monkeypatch.setattr(verify_files.filedialog, "askopenfilename", lambda **_kw: next(selections))
     mode.select_file()
     assert mode.file_path == path
-    assert mode.selected_file_path["text"] == path
+    assert mode.selected_file_path.get("1.0", "end-1c") == path
     assert mode.filename_label["text"] == "filename.bin"
     mode.select_file()
     assert mode.file_path == path

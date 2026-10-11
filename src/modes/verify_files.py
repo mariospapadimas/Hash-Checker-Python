@@ -35,7 +35,14 @@ class VerifyFilesMode:
             parent, text="Select File", command=self.select_file
         )
         self.filename_label = tk.Label(parent, text="No file selected", wraplength=700)
-        self.selected_file_path = tk.Label(parent, text="", wraplength=700)
+        self.path_frame = tk.Frame(parent)
+        self.selected_file_path = tk.Text(
+            self.path_frame, height=3, width=70, wrap="char", state="disabled"
+        )
+        self.path_scrollbar = ttk.Scrollbar(
+            self.path_frame, orient="vertical", command=self.selected_file_path.yview
+        )
+        self.selected_file_path.config(yscrollcommand=self.path_scrollbar.set)
         self.algorithm_select = ttk.Combobox(
             parent, values=list(AppUtils.ALGORITHMS), state="readonly",
             textvariable=self.algorithm_var, width=16
@@ -58,7 +65,9 @@ class VerifyFilesMode:
         """Use compact controls with wrapping for long paths and results."""
         self.select_button.pack(pady=8)
         self.filename_label.pack(fill="x")
-        self.selected_file_path.pack(fill="x", pady=(0, 8))
+        self.path_frame.pack(fill="x", padx=20, pady=(0, 8))
+        self.path_scrollbar.pack(side="right", fill="y")
+        self.selected_file_path.pack(side="left", fill="both", expand=True)
         self.algorithm_select.pack(pady=5)
         self.expected_prompt.pack(pady=5)
         self.expected_hash.pack(fill="x", padx=20, ipady=5)
@@ -76,8 +85,15 @@ class VerifyFilesMode:
         if path:
             self.file_path = path
             self.filename_label.config(text=os.path.basename(path))
-            self.selected_file_path.config(text=path)
+            self._display_path(path)
             self._inputs_changed()
+
+    def _display_path(self, path):
+        """Keep the entire path accessible in a bounded scrollable display."""
+        self.selected_file_path.config(state="normal")
+        self.selected_file_path.delete("1.0", "end")
+        self.selected_file_path.insert("1.0", path)
+        self.selected_file_path.config(state="disabled")
 
     def _inputs_changed(self, *_args):
         if self.busy or self._disposed:
@@ -156,7 +172,9 @@ class VerifyFilesMode:
             VerifyFilesMode._queue_event(events, cancel, "error",
                                         "Cannot read file: permission denied.")
         except (OSError, ValueError) as error:
-            VerifyFilesMode._queue_event(events, cancel, "error", f"Cannot read or hash file: {error}")
+            VerifyFilesMode._queue_event(
+                events, cancel, "error", f"Cannot read or hash file: {error}"
+            )
         else:
             VerifyFilesMode._queue_event(events, cancel, "done", (digest, expected))
 
@@ -199,7 +217,7 @@ class VerifyFilesMode:
             return
         self.file_path = None
         self.filename_label.config(text="No file selected")
-        self.selected_file_path.config(text="")
+        self._display_path("")
         self.expected_hash_var.set("")
         self._inputs_changed()
 
