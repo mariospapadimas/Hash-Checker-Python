@@ -14,9 +14,11 @@ class HashChecker:
     def __init__(self, root):
         """Initialize the HashChecker application."""
         self.root = root
+        self.active_mode = None
 
         self.root.title("Hash Checker")
         self.root.geometry("800x600")
+        self.root.protocol("WM_DELETE_WINDOW", self.close)
 
         self.design = DesignSystem()
 
@@ -41,24 +43,37 @@ class HashChecker:
 
     def on_selection_change(self, _event=None):
         """Change the hash checker mode."""
+        self._dispose_active_mode()
         for widget in self.content_frame.winfo_children():
             widget.destroy()
 
         selection = self.mode_select.get()
 
         if selection == "Compare Hashes Mode":
-            mode = CompareHashesMode(
+            self.active_mode = CompareHashesMode(
                 self.content_frame,
                 self.design
             )
-            mode.draw_ui()
 
         elif selection == "Verify Files Mode":
-            mode = VerifyFilesMode(
+            self.active_mode = VerifyFilesMode(
                 self.content_frame,
                 self.design
             )
-            mode.draw_ui()
+        if self.active_mode is not None:
+            self.active_mode.draw_ui()
+
+    def _dispose_active_mode(self):
+        if self.active_mode is not None:
+            dispose = getattr(self.active_mode, "dispose", None)
+            if dispose is not None:
+                dispose()
+            self.active_mode = None
+
+    def close(self):
+        """Dispose the current mode before closing the window."""
+        self._dispose_active_mode()
+        self.root.destroy()
 
     def draw_ui(self):
         """Draw the UI."""
@@ -67,6 +82,6 @@ class HashChecker:
         self.mode_select.current(0)
         self.mode_select.pack(pady=10)
 
-        self.content_frame.pack()
+        self.content_frame.pack(fill="both", expand=True, padx=20)
 
         self.on_selection_change()

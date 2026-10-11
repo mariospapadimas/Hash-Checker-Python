@@ -1,0 +1,1 @@
+"""Hash Checker test suite."""
